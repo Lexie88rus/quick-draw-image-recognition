@@ -142,7 +142,34 @@ def save_data(X_train, y_train, X_test, y_test):
         with open('ytest_doodle.pickle', 'wb') as f:
             pickle.dump(y_test, f)
 
-def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_rate = 0.003):
+def build_model(input_size, output_size, hidden_sizes, architecture = 'nn', dropout = 0.0):
+    '''
+    Function creates deep learning model based on parameters passed.
+
+    INPUT:
+        1. architecture - model architecture
+            'nn' - for feed-forward neural network with 1 hidden layer
+        2. dropout - dropout (probability of keeping a node)
+
+    OUTPUT:
+        model - deep learning model
+    '''
+
+    # Build a feed-forward network
+    model = nn.Sequential(OrderedDict([
+                          ('fc1', nn.Linear(input_size, hidden_sizes[0])),
+                          ('relu1', nn.ReLU()),
+                          ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
+                          ('relu2', nn.ReLU()),
+                          ('dropout', nn.Dropout(dropout)),
+                          ('fc3', nn.Linear(hidden_sizes[1], hidden_sizes[2])),
+                          ('relu3', nn.ReLU()),
+                          ('logits', nn.Linear(hidden_sizes[2], output_size))]))
+
+    return model
+
+
+def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_rate = 0.003, weight_decay = 0):
     """
     Function which fits the model.
 
@@ -161,7 +188,7 @@ def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_r
     .format(epochs = epochs, lr = learning_rate))
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate)
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate, weight_decay= weight_decay)
 
     print_every = 100
 
@@ -382,12 +409,63 @@ def plot_learning_curve(model, train, labels, y_train, test, y_test):
     plt.plot(x, train_acc)
     plt.plot(x, test_acc)
     plt.legend(['train', 'test'], loc='upper left')
-    plt.title('Accuracy depending on number of epochs', fontsize=20)
+    plt.title('Accuracy, learning_rate = 0.003', fontsize=20)
     plt.xlabel('Number of epochs', fontsize=14)
     plt.ylabel('Accuracy', fontsize=14)
 
     ts = time.time()
     plt.savefig('learning_curve' + str(ts) + '.png')
+
+def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, architecture = 'nn'):
+    # define hyperparameters grid
+    weight_decays = [0.0, 0.5, 0.7]
+    dropouts = [0.0, 0.3, 0.5]
+
+    #weight_decays = [0.0]
+    #dropouts = [0.0]
+
+    epochs = np.arange(10, 110, 10)
+
+    results = {}
+    params = []
+
+    # train and evaluate models with different hyperparameters
+    for weight_decay in weight_decays:
+        for dropout in dropouts:
+
+            test_acc = []
+
+            for e in epochs:
+
+                model = build_model(input_size, output_size, hidden_sizes, architecture = architecture, dropout = dropout)
+                fit_model(model, train, labels, epochs = e, n_chunks = 7000, learning_rate = learning_rate)
+
+                accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test)
+
+                test_acc.append(accuracy_test)
+
+            results['weight_decay: ' + str(weight_decay) + ', dropout: ' + str(dropout)] = test_acc
+            params.append('weight_decay: ' + str(weight_decay) + ', dropout: ' + str(dropout))
+
+    print(results)
+
+    ts = time.time()
+
+    # save results as csv
+    df = pd.DataFrame.from_dict(results)
+    df.to_csv('comparison_' + str(ts) + '.csv')
+
+    # plot results
+    x = np.arange(10, 110, 10)
+    for param in params:
+        plt.plot(x, results[param])
+
+    plt.legend(params, loc='upper left')
+    plt.title('Accuracy, learing rate = ' + str(learning_rate), fontsize=20)
+    plt.xlabel('Number of epochs', fontsize=14)
+    plt.ylabel('Accuracy', fontsize=14)
+
+    plt.savefig('hyperparameters_comparison_' + str(ts) + '.png')
 
 def main():
     # Parse command line arguments
@@ -402,12 +480,24 @@ def main():
     parser.add_argument('--epochs', type = int, action='store', default = 30,
                         help='Model hyperparameters: epochs')
 
+    parser.add_argument('--weight_decay', type = int, action='store', default = 0,
+                        help='Model hyperparameters: weight decay (regularization)')
+
+    parser.add_argument('--dropout', type = float, action='store', default = 0.0,
+                        help='Model hyperparameters: dropout')
+
+    parser.add_argument('--architecture', action='store', default = 'nn',
+                        help='Model architecture: nn - feed forward neural network with 1 hidden layer,')
+
     parser.add_argument('--gpu', action='store_true',
                         help='Run training on GPU')
     results = parser.parse_args()
 
     learning_rate = results.learning_rate
     epochs = results.epochs
+    weight_decay = results.weight_decay
+    dropout = results.dropout
+    architecture = results.architecture
 
     if (results.gpu == True):
         device = 'cuda'
@@ -418,21 +508,6 @@ def main():
         save_path = 'checkpoint.pth'
     else:
         save_path = results.save_dir + '/' + 'checkpoint.pth'
-
-    # Hyperparameters for our network
-    input_size = 784
-    hidden_sizes = [128, 100, 64]
-    output_size = 10
-
-    # Build a feed-forward network
-    model = nn.Sequential(OrderedDict([
-                          ('fc1', nn.Linear(input_size, hidden_sizes[0])),
-                          ('relu1', nn.ReLU()),
-                          ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
-                          ('relu2', nn.ReLU()),
-                          ('fc3', nn.Linear(hidden_sizes[1], hidden_sizes[2])),
-                          ('relu3', nn.ReLU()),
-                          ('logits', nn.Linear(hidden_sizes[2], output_size))]))
 
     # Load data
     X_train, y_train, X_test, y_test = load_data()
@@ -446,15 +521,25 @@ def main():
     test = torch.from_numpy(X_test).float()
     test_labels = torch.from_numpy(y_test).long()
 
+    # Hyperparameters for our network
+    input_size = 784
+    hidden_sizes = [128, 100, 64]
+    output_size = 10
+
+    # Build model
+    model = build_model(input_size, output_size, hidden_sizes, architecture = architecture, dropout = dropout)
+
     # Fit model
-    fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate)
-    plot_learning_curve(model, train, labels, y_train, test, y_test)
+    fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
+    #plot_learning_curve(model, train, labels, y_train, test, y_test)
 
     # Evaluate model
     evaluate_model(model, train, y_train, test, y_test)
 
     # Save the model
     save_model(model, input_size, output_size, hidden_sizes, filepath = save_path)
+
+    compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate)
 
 if __name__ == '__main__':
     main()
