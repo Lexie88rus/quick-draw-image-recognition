@@ -172,6 +172,28 @@ def build_model(input_size, output_size, hidden_sizes, architecture = 'nn', drop
 
     return model
 
+def shuffle(X_train, y_train):
+    """
+    Function which shuffles training dataset.
+    INPUT:
+        X_train - (tensor) training set
+        y_train - (tensor) labels for training set
+
+    OUTPUT:
+        X_train_shuffled - (tensor) shuffled training set
+        y_train_shuffled - (tensor) shuffled labels for training set
+    """
+    X_train_shuffled = X_train.numpy()
+    y_train_shuffled = y_train.numpy().reshape((X_train.shape[0], 1))
+
+    permutation = list(np.random.permutation(X_train.shape[0]))
+    X_train_shuffled = X_train_shuffled[permutation, :]
+    y_train_shuffled = y_train_shuffled[permutation, :].reshape((X_train.shape[0], 1))
+
+    X_train_shuffled = torch.from_numpy(X_train_shuffled).float()
+    y_train_shuffled = torch.from_numpy(y_train_shuffled).long()
+
+    return X_train_shuffled, y_train_shuffled
 
 def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_rate = 0.003, weight_decay = 0):
     """
@@ -196,13 +218,15 @@ def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_r
 
     print_every = 100
 
-    images = torch.chunk(X_train, n_chunks)
-    labels = torch.chunk(y_train, n_chunks)
-
     steps = 0
 
     for e in range(epochs):
         running_loss = 0
+
+        X_train, y_train = shuffle(X_train, y_train)
+
+        images = torch.chunk(X_train, n_chunks)
+        labels = torch.chunk(y_train, n_chunks)
 
         for i in range(n_chunks):
             steps += 1
@@ -431,8 +455,8 @@ def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_
 
 def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, architecture = 'nn'):
     # define hyperparameters grid
-    weight_decays = [0.0, 0.1, 0.2]
-    dropouts = [0.0, 0.3, 0.5]
+    weight_decays = [0.9, 1.0]
+    dropouts = [0.0]
 
     #weight_decays = [0.0]
     #dropouts = [0.0]
@@ -496,7 +520,7 @@ def create_heatmap_for_each_class(X_train, y_train):
     OUTPUT: None
     """
     label_dict = {0:'cannon',1:'eye', 2:'face', 3:'nail', 4:'pear',
-                  5:'piana',6:'radio', 7:'spider', 8:'star', 9:'sword'}
+                  5:'piano',6:'radio', 7:'spider', 8:'star', 9:'sword'}
 
     for i in range(0, 10):
         view_label_heatmap(X_train, y_train, i, label_dict[i])
@@ -572,7 +596,7 @@ def main():
 
     # Fit model
     fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
-    plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay)
+    #plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay)
 
     # Evaluate model
     evaluate_model(model, train, y_train, test, y_test)
@@ -580,7 +604,7 @@ def main():
     # Save the model
     save_model(model, input_size, output_size, hidden_sizes, filepath = save_path)
 
-    compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate)
+    #compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate)
 
 if __name__ == '__main__':
     main()
