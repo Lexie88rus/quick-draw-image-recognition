@@ -30,6 +30,9 @@ from torch import optim
 import torch.nn.functional as F
 from torchvision import datasets, transforms
 
+import image_utils
+from image_utils import add_flipped_and_rotated_images
+
 def load_data():
     """
     Function loads quick draw dataset. If no data is loaded yet, the datasets
@@ -110,7 +113,7 @@ def load_data():
 
     return X_train, y_train, X_test, y_test
 
-def save_data(X_train, y_train, X_test, y_test):
+def save_data(X_train, y_train, X_test, y_test, force = False):
     """
     The function saves datasets to disk as pickle files.
 
@@ -119,13 +122,14 @@ def save_data(X_train, y_train, X_test, y_test):
         y_train - train dataset labels
         X_test - test dataset
         y_test - test dataset labels
+        force - forced saving of the files
 
     OUTPUT: None
     """
     print("Saving data \n")
 
     # Check for already saved files
-    if not(path.exists('xtrain_doodle.pickle')):
+    if not(path.exists('xtrain_doodle.pickle')) or force:
         # Save X_train dataset as a pickle file
         with open('xtrain_doodle.pickle', 'wb') as f:
             pickle.dump(X_train, f)
@@ -207,7 +211,7 @@ def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_r
 
             # Forward and backward passes
             output = model.forward(images[i])
-            loss = criterion(output, labels[i])
+            loss = criterion(output, labels[i].squeeze())
             loss.backward()
             optimizer.step()
 
@@ -378,17 +382,20 @@ def evaluate_model(model, train, y_train, test, y_test):
 
     return accuracy_train, accuracy_test
 
-def plot_learning_curve(model, train, labels, y_train, test, y_test):
+def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = 0.003, weight_decay = 0.0, dropout = 0.0):
     """
     Function to plot learning curve depending on the number of epochs.
 
     INPUT:
-        model - pytorch model
+        input_size, output_size, hidden_sizes - model parameters
         train - (tensor) train dataset
         labels - (tensor) labels for train dataset
         y_train - (numpy) labels for train dataset
         test - (tensor) test dataset
         y_test - (numpy) labels for test dataset
+        learning_rate - learning rate hyperparameter
+        weight_decay - weight decay (regularization)
+        dropout - dropout for hidden layer
 
     OUTPUT: None
     """
@@ -396,8 +403,11 @@ def plot_learning_curve(model, train, labels, y_train, test, y_test):
     test_acc = []
 
     for epochs in np.arange(10, 110, 10):
+        # create model
+        model = build_model(input_size, output_size, hidden_sizes, dropout = dropout)
+
         # fit model
-        fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = 0.003)
+        fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
         # get accuracy
         accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test)
 
@@ -409,16 +419,19 @@ def plot_learning_curve(model, train, labels, y_train, test, y_test):
     plt.plot(x, train_acc)
     plt.plot(x, test_acc)
     plt.legend(['train', 'test'], loc='upper left')
-    plt.title('Accuracy, learning_rate = 0.003', fontsize=20)
+    plt.title('Accuracy, learning_rate = ' + str(learning_rate), fontsize=20)
     plt.xlabel('Number of epochs', fontsize=14)
     plt.ylabel('Accuracy', fontsize=14)
 
     ts = time.time()
     plt.savefig('learning_curve' + str(ts) + '.png')
 
+    df = pd.DataFrame.from_dict({'train' : train_acc, 'test' :test_acc})
+    df.to_csv('learning_curve_' + str(ts) + '.csv')
+
 def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, architecture = 'nn'):
     # define hyperparameters grid
-    weight_decays = [0.0, 0.5, 0.7]
+    weight_decays = [0.0, 0.1, 0.2]
     dropouts = [0.0, 0.3, 0.5]
 
     #weight_decays = [0.0]
@@ -434,18 +447,24 @@ def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels
         for dropout in dropouts:
 
             test_acc = []
+            train_acc = []
 
             for e in epochs:
-
                 model = build_model(input_size, output_size, hidden_sizes, architecture = architecture, dropout = dropout)
-                fit_model(model, train, labels, epochs = e, n_chunks = 7000, learning_rate = learning_rate)
+                fit_model(model, train, labels, epochs = e, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
 
                 accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test)
 
+                train_acc.append(accuracy_train)
                 test_acc.append(accuracy_test)
 
-            results['weight_decay: ' + str(weight_decay) + ', dropout: ' + str(dropout)] = test_acc
+            results['test weight_decay: ' + str(weight_decay) + ', dropout: ' + str(dropout)] = test_acc
+            results['train weight_decay: ' + str(weight_decay) + ', dropout: ' + str(dropout)] = train_acc
             params.append('weight_decay: ' + str(weight_decay) + ', dropout: ' + str(dropout))
+
+            # save intermediate results
+            df = pd.DataFrame.from_dict(results)
+            df.to_csv('comparison.csv')
 
     print(results)
 
@@ -467,6 +486,21 @@ def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels
 
     plt.savefig('hyperparameters_comparison_' + str(ts) + '.png')
 
+def create_heatmap_for_each_class(X_train, y_train):
+    """
+    Function creates heatmaps for images for each class in the training dataset.
+    INPUT:
+        X_train - (numpy array) training dataset
+        y_train - (numpy array) labels for the training dataset
+
+    OUTPUT: None
+    """
+    label_dict = {0:'cannon',1:'eye', 2:'face', 3:'nail', 4:'pear',
+                  5:'piana',6:'radio', 7:'spider', 8:'star', 9:'sword'}
+
+    for i in range(0, 10):
+        view_label_heatmap(X_train, y_train, i, label_dict[i])
+
 def main():
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Argument parser')
@@ -480,7 +514,7 @@ def main():
     parser.add_argument('--epochs', type = int, action='store', default = 30,
                         help='Model hyperparameters: epochs')
 
-    parser.add_argument('--weight_decay', type = int, action='store', default = 0,
+    parser.add_argument('--weight_decay', type = float, action='store', default = 0,
                         help='Model hyperparameters: weight decay (regularization)')
 
     parser.add_argument('--dropout', type = float, action='store', default = 0.0,
@@ -488,6 +522,9 @@ def main():
 
     parser.add_argument('--architecture', action='store', default = 'nn',
                         help='Model architecture: nn - feed forward neural network with 1 hidden layer,')
+
+    parser.add_argument('--add_data', action='store_true',
+                        help='Add flipped and rotated images to the original training set.')
 
     parser.add_argument('--gpu', action='store_true',
                         help='Run training on GPU')
@@ -512,8 +549,12 @@ def main():
     # Load data
     X_train, y_train, X_test, y_test = load_data()
 
+    # Add flipped and rotated images to the dataset
+    if (results.add_data == True):
+        X_train, y_train = add_flipped_and_rotated_images(X_train, y_train)
+
     # Save datasets to disk if required
-    save_data(X_train, y_train, X_test, y_test)
+    save_data(X_train, y_train, X_test, y_test, force = results.add_data)
 
     # Convert to tensors
     train = torch.from_numpy(X_train).float()
@@ -531,7 +572,7 @@ def main():
 
     # Fit model
     fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
-    #plot_learning_curve(model, train, labels, y_train, test, y_test)
+    plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay)
 
     # Evaluate model
     evaluate_model(model, train, y_train, test, y_test)
