@@ -78,7 +78,7 @@ def load_data():
 
         # Create a dict with label codes
         label_dict = {0:'cannon',1:'eye', 2:'face', 3:'nail', 4:'pear',
-                      5:'piana',6:'radio', 7:'spider', 8:'star', 9:'sword'}
+                      5:'piano',6:'radio', 7:'spider', 8:'star', 9:'sword'}
 
         lst = []
         for key, value in classes_dict.items():
@@ -195,7 +195,7 @@ def shuffle(X_train, y_train):
 
     return X_train_shuffled, y_train_shuffled
 
-def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_rate = 0.003, weight_decay = 0):
+def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_rate = 0.003, weight_decay = 0, optimizer = 'SGD'):
     """
     Function which fits the model.
 
@@ -214,7 +214,11 @@ def fit_model(model, X_train, y_train, epochs = 100, n_chunks = 1000, learning_r
     .format(epochs = epochs, lr = learning_rate))
 
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=learning_rate, weight_decay= weight_decay)
+
+    if (optimizer == 'SGD'):
+        optimizer = optim.SGD(model.parameters(), lr=learning_rate, weight_decay= weight_decay)
+    else:
+        optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay= weight_decay)
 
     print_every = 100
 
@@ -406,7 +410,7 @@ def evaluate_model(model, train, y_train, test, y_test):
 
     return accuracy_train, accuracy_test
 
-def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = 0.003, weight_decay = 0.0, dropout = 0.0):
+def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = 0.003, weight_decay = 0.0, dropout = 0.0, n_chunks = 1000, optimizer = 'SGD'):
     """
     Function to plot learning curve depending on the number of epochs.
 
@@ -420,6 +424,8 @@ def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_
         learning_rate - learning rate hyperparameter
         weight_decay - weight decay (regularization)
         dropout - dropout for hidden layer
+        n_chunks - the number of minibatches to train the model
+        optimizer - optimizer to be used for training (SGD or Adam)
 
     OUTPUT: None
     """
@@ -431,7 +437,7 @@ def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_
         model = build_model(input_size, output_size, hidden_sizes, dropout = dropout)
 
         # fit model
-        fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
+        fit_model(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = 'SGD')
         # get accuracy
         accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test)
 
@@ -453,13 +459,13 @@ def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_
     df = pd.DataFrame.from_dict({'train' : train_acc, 'test' :test_acc})
     df.to_csv('learning_curve_' + str(ts) + '.csv')
 
-def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, architecture = 'nn'):
+def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, architecture = 'nn', n_chunks = 1000, optimizer = 'SGD'):
+    """
+    Function which evaluates the accyracy of the model on set of hyperparameters dropout and weight_decay.
+    """
     # define hyperparameters grid
-    weight_decays = [0.9, 1.0]
-    dropouts = [0.0]
-
-    #weight_decays = [0.0]
-    #dropouts = [0.0]
+    weight_decays = [0.0]
+    dropouts = [0.0, 0.3, 0.5]
 
     epochs = np.arange(10, 110, 10)
 
@@ -475,7 +481,7 @@ def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels
 
             for e in epochs:
                 model = build_model(input_size, output_size, hidden_sizes, architecture = architecture, dropout = dropout)
-                fit_model(model, train, labels, epochs = e, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
+                fit_model(model, train, labels, epochs = e, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
 
                 accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test)
 
@@ -497,18 +503,6 @@ def compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels
     # save results as csv
     df = pd.DataFrame.from_dict(results)
     df.to_csv('comparison_' + str(ts) + '.csv')
-
-    # plot results
-    x = np.arange(10, 110, 10)
-    for param in params:
-        plt.plot(x, results[param])
-
-    plt.legend(params, loc='upper left')
-    plt.title('Accuracy, learing rate = ' + str(learning_rate), fontsize=20)
-    plt.xlabel('Number of epochs', fontsize=14)
-    plt.ylabel('Accuracy', fontsize=14)
-
-    plt.savefig('hyperparameters_comparison_' + str(ts) + '.png')
 
 def create_heatmap_for_each_class(X_train, y_train):
     """
@@ -545,10 +539,18 @@ def main():
                         help='Model hyperparameters: dropout')
 
     parser.add_argument('--architecture', action='store', default = 'nn',
-                        help='Model architecture: nn - feed forward neural network with 1 hidden layer,')
+                        help='Model architecture: nn - feed forward neural network with 1 hidden layer.',
+                        choices = ['nn'])
 
     parser.add_argument('--add_data', action='store_true',
                         help='Add flipped and rotated images to the original training set.')
+
+    parser.add_argument('--mini_batches', type = int, action='store', default = 1000,
+                        help='Number of minibatches.')
+
+    parser.add_argument('--optimizer', action='store', default = 'SGD',
+    choices=['SGD', 'Adam'],
+    help='Optimizer for fitting the model.')
 
     parser.add_argument('--gpu', action='store_true',
                         help='Run training on GPU')
@@ -559,6 +561,8 @@ def main():
     weight_decay = results.weight_decay
     dropout = results.dropout
     architecture = results.architecture
+    n_chunks = results.mini_batches
+    optimizer = results.optimizer
 
     if (results.gpu == True):
         device = 'cuda'
@@ -595,8 +599,8 @@ def main():
     model = build_model(input_size, output_size, hidden_sizes, architecture = architecture, dropout = dropout)
 
     # Fit model
-    fit_model(model, train, labels, epochs = epochs, n_chunks = 7000, learning_rate = learning_rate, weight_decay = weight_decay)
-    #plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay)
+    fit_model(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
+    #plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
 
     # Evaluate model
     evaluate_model(model, train, y_train, test, y_test)
@@ -604,7 +608,7 @@ def main():
     # Save the model
     save_model(model, input_size, output_size, hidden_sizes, filepath = save_path)
 
-    #compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate)
+    compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, n_chunks = n_chunks, optimizer = optimizer)
 
 if __name__ == '__main__':
     main()
