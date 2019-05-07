@@ -9,6 +9,7 @@ import random
 # import matplotlib for plotting
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
+import imageio
 
 # import PIL for image manipulation
 from PIL import Image
@@ -230,10 +231,11 @@ def view_label_heatmap(X_train, y_train, label, label_name):
     """
     # filter X_train to remove all other images
     label_filter = y_train == label
-    X_train_labeled = X_train[label_filter]
+    X = pd.DataFrame(X_train)
+    X_train_labeled = X[label_filter]
 
     # find mean value for pixels
-    X_mean = np.sum(X_train_labeled, axis = 0)
+    X_mean = np.sum(X, axis = 0).values
 
     # plot image
     fig, ax = plt.subplots(figsize=(6,9))
@@ -242,3 +244,78 @@ def view_label_heatmap(X_train, y_train, label, label_name):
     ax.axis('off')
 
     plt.savefig(label_name + '.png')
+
+def view_images_grid(X_train, y_train, label, label_name):
+    """
+    Function to plot grid with several examples of images with
+    passed label.
+    INPUT:
+        X_train - (numpy array) training dataset
+        y_train - (numpy array) labels for training dataset
+        label - (int) label for images
+        label_name - (str) name for images label
+
+    OUTPUT: None
+    """
+    indices = np.where(y_train == label)
+    X = pd.DataFrame(X_train)
+
+    for label_num in range(0,50):
+        plt.subplot(5,10, label_num+1) #create subplots
+        image = X.iloc[indices[0][label_num]].as_matrix().reshape(28,28)  #reshape images
+        plt.imshow(image) #plot the data
+        plt.xticks([]) #removes numbered labels on x-axis
+        plt.yticks([]) #removes numbered labels on y-axis
+        plt.suptitle(label_name)
+
+        plt.savefig(label_name + '_grid.png')
+
+def plot_image(image, label_name):
+    """
+    Helper function to plot 1 part of animated image.
+    """
+    fig, ax = plt.subplots(figsize=(5,5))
+
+    plt.imshow(image) #plot the data
+    plt.xticks([]) #removes numbered labels on x-axis
+    plt.yticks([])
+
+    ax.set_title(label_name)
+
+    # Used to return the plot as an image rray
+    fig.canvas.draw() # draw the canvas, cache the renderer
+    image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
+    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+
+    return image
+
+def create_animated_images(X_train, y_train, label, label_name):
+    """
+    Function creates animated gif with images of a certain label.
+    INPUT:
+        X_train - (numpy array) training dataset
+        y_train - (numpy array) labels for training dataset
+        label - (int) label for images
+        label_name - (str) name for images label
+
+    OUTPUT: None
+    """
+    # get images of a certain label
+    indices = np.where(y_train == label)
+    X = pd.DataFrame(X_train)
+
+    images = []
+    for label_num in range(0,50):
+        image = X.iloc[indices[0][label_num]].as_matrix().reshape(28,28)  #reshape images
+        images.append(image)
+
+    # save plotted images into a gif
+    kwargs_write = {'fps':1.0, 'quantizer':'nq'}
+    imageio.mimsave('./'+ label_name + '.gif', [plot_image(i, label_name) for i in images], fps=1)
+
+X_train, y_train, X_test, y_test = load_data()
+label_dict = {0:'cannon',1:'eye', 2:'face', 3:'nail', 4:'pear',
+              5:'piano',6:'radio', 7:'spider', 8:'star', 9:'sword'}
+
+for i in range(0,10):
+    create_animated_images(X_train, y_train, i, label_dict[i])
