@@ -282,10 +282,13 @@ def plot_image(image, label_name):
 
     ax.set_title(label_name)
 
-    # Used to return the plot as an image rray
+    dims = (fig.canvas.get_width_height()[0] * 2, fig.canvas.get_width_height()[1] * 2)
+
+    # Used to return the plot as an image array
     fig.canvas.draw() # draw the canvas, cache the renderer
     image = np.frombuffer(fig.canvas.tostring_rgb(), dtype='uint8')
-    image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    #image  = image.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    image  = image.reshape(dims[::-1] + (3,))
 
     return image
 
@@ -312,10 +315,3 @@ def create_animated_images(X_train, y_train, label, label_name):
     # save plotted images into a gif
     kwargs_write = {'fps':1.0, 'quantizer':'nq'}
     imageio.mimsave('./'+ label_name + '.gif', [plot_image(i, label_name) for i in images], fps=1)
-
-X_train, y_train, X_test, y_test = load_data()
-label_dict = {0:'cannon',1:'eye', 2:'face', 3:'nail', 4:'pear',
-              5:'piano',6:'radio', 7:'spider', 8:'star', 9:'sword'}
-
-for i in range(0,10):
-    create_animated_images(X_train, y_train, i, label_dict[i])
