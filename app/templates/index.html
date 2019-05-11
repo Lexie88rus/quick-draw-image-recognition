@@ -1,0 +1,168 @@
+<!--
+Template for the main page of the Quick Draw web app.
+
+Code for drawing on canvas is from:
+https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
+-->
+<!doctype html>
+<html lang="en">
+  <head>
+      <meta charset="utf-8">
+      <meta http-equiv="X-UA-Compatible" content="IE=edge">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+
+      <title>Quick Draw!</title>
+      <link rel="shortcut icon" href="{{url_for('static', filename='favicon.ico')}}">
+
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+      <script src="http://cdn.jsdelivr.net/jquery.validation/1.15.0/jquery.validate.min.js"></script>
+      <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+      <!-- FontAwesome JS -->
+      <script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js" integrity="sha384-0pzryjIRos8mFBWMzSSZApWtPl/5++eIfzYmTgBBmXYdhvxPc+XcFEk+zJwDgWbP" crossorigin="anonymous"></script>
+  </head>
+  <script type="text/javascript">
+   var canvas, ctx, flag = false,
+       prevX = 0,
+       currX = 0,
+       prevY = 0,
+       currY = 0,
+       dot_flag = false;
+
+   var x = "black",
+       y = 2;
+
+   function init() {
+       canvas = document.getElementById('can');
+       ctx = canvas.getContext("2d");
+       w = canvas.width;
+       h = canvas.height;
+
+       canvas.addEventListener("mousemove", function (e) {
+           findxy('move', e)
+       }, false);
+       canvas.addEventListener("mousedown", function (e) {
+           findxy('down', e)
+       }, false);
+       canvas.addEventListener("mouseup", function (e) {
+           findxy('up', e)
+       }, false);
+       canvas.addEventListener("mouseout", function (e) {
+           findxy('out', e)
+       }, false);
+   }
+
+   function color(obj) {
+     x = "black";
+   }
+
+   function draw() {
+       ctx.beginPath();
+       ctx.moveTo(prevX, prevY);
+       ctx.lineTo(currX, currY);
+       ctx.strokeStyle = x;
+       ctx.lineWidth = y;
+       ctx.stroke();
+       ctx.closePath();
+   }
+
+   function erase() {
+       var m = confirm("Clear canvas?");
+       if (m) {
+           ctx.clearRect(0, 0, w, h);
+           document.getElementById("canvasimg").style.display = "none";
+       }
+   }
+
+   function save() {
+       var dataURL = canvas.toDataURL();
+       $.ajax({
+        type: "POST",
+        url: "/hook",
+        data:{
+          imageBase64: dataURL
+        }
+      }).done(function() {
+        console.log('sent');
+      });
+   }
+
+   function findxy(res, e) {
+       if (res == 'down') {
+           prevX = currX;
+           prevY = currY;
+           currX = e.clientX - canvas.offsetLeft;
+           currY = e.clientY - canvas.offsetTop;
+
+           flag = true;
+           dot_flag = true;
+           if (dot_flag) {
+               ctx.beginPath();
+               ctx.fillStyle = x;
+               ctx.fillRect(currX, currY, 2, 2);
+               ctx.closePath();
+               dot_flag = false;
+           }
+       }
+       if (res == 'up' || res == "out") {
+           flag = false;
+       }
+       if (res == 'move') {
+           if (flag) {
+               prevX = currX;
+               prevY = currY;
+               currX = e.clientX - canvas.offsetLeft;
+               currY = e.clientY - canvas.offsetTop;
+               draw();
+           }
+       }
+   }
+  </script>
+
+  <body onload="init()">
+
+    <!-- Navigation panel -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <a class="navbar-brand" href="#">Quick Draw!</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="https://github.com/Lexie88rus"><i class="fab fa-github" style="color:white; font-size: 20px;"></i></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://lexie88rus.github.io"><i class="fas fa-link" style="color:white; font-size: 20px;"></i></a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="https://www.linkedin.com/in/aleksandra-deis-0912/"><i class="fab fa-linkedin-in" style="color:white; font-size: 20px;"></i></a>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <!-- page header -->
+    <div class="jumbotron" style="background-image: url({{url_for('static', filename='jumbotron.png')}})">
+        <div class="container">
+            <h1 class="text-center">Quick Draw!</h1>
+            <p class="text-center">Draw an image and click "Done!" to recognize it!</p>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+       <!-- Canvas element to draw images-->
+      <!-- <canvas id="can" width="400" height="400" style="position:absolute;top:10%;left:10%;border:2px solid;"></canvas>-->
+       <canvas id="can" width="400" height="400" style="border:2px solid; margin:25px"></canvas>
+    </div>
+       <!-- Button to confirm drawing-->
+       <!-- <input type="button" value="Done!" id="btn" size="30" onclick="save()" style="position:absolute;top:60%;left:10%;">-->
+    <div class="row justify-content-center">
+       <input class="btn btn-primary col-md-1" type="button" value="Done!" id="btn" onclick="save()">
+
+       <!-- Button to clear canvas-->
+       <!-- <input type="button" value="Clear" id="clr" size="23" onclick="erase()" style="position:absolute;top:60%;left:15%;">-->
+       <input class="btn btn-primary col-md-1 ml-5" type="button" value="Clear" id="clr" onclick="erase()">
+    </div>
+
+  </body>
+</html>
