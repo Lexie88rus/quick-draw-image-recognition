@@ -164,9 +164,11 @@ def build_model(input_size, output_size, hidden_sizes, architecture = 'nn', drop
                           ('fc1', nn.Linear(input_size, hidden_sizes[0])),
                           ('relu1', nn.ReLU()),
                           ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
+                          ('bn2', nn.BatchNorm1d(num_features=hidden_sizes[1])),
                           ('relu2', nn.ReLU()),
                           ('dropout', nn.Dropout(dropout)),
                           ('fc3', nn.Linear(hidden_sizes[1], hidden_sizes[2])),
+                          ('bn3', nn.BatchNorm1d(num_features=hidden_sizes[2])),
                           ('relu3', nn.ReLU()),
                           ('logits', nn.Linear(hidden_sizes[2], output_size))]))
 
@@ -600,7 +602,7 @@ def main():
 
     # Fit model
     fit_model(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
-    #plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
+    plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
 
     # Evaluate model
     evaluate_model(model, train, y_train, test, y_test)
@@ -608,7 +610,7 @@ def main():
     # Save the model
     save_model(model, input_size, output_size, hidden_sizes, filepath = save_path)
 
-    compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, n_chunks = n_chunks, optimizer = optimizer)
+    #compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, n_chunks = n_chunks, optimizer = optimizer)
 
 if __name__ == '__main__':
     main()
