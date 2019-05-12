@@ -24,6 +24,10 @@ import time
 from flask import Flask
 from flask import render_template, request
 
+# import image processing
+import image_utils
+from image_utils import crop_image, normalize_image
+
 app = Flask(__name__)
 
 # load model
@@ -52,6 +56,13 @@ def get_image():
     # save image as png (for debugging)
     ts = time.time()
     img.save('image' + str(ts) + '.png', 'PNG')
+
+    # preprocess the image for the model
+    image_cropped = crop_image(img)
+    image_normalized = normalize_image(image_cropped)
+
+    # save preprocessed image
+    image_normalized.save('image_preprocessed' + str(ts) + '.png', 'PNG')
 
     return ''
 
