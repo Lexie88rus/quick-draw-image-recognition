@@ -74,18 +74,22 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
        }
    }
 
-   function save() {
+    function save() {
        var dataURL = canvas.toDataURL();
-       $.ajax({
-        type: "POST",
-        url: "/hook",
-        data:{
-          imageBase64: dataURL
-        }
-      }).done(function() {
-        console.log('sent');
-      });
-   }
+       // get base64 string from dataUrl
+       dataURL = dataURL.split(",")[1];
+       //  replace base64 characters '+/=' with '._-'
+       while (dataURL.indexOf('+') > 0) {
+          dataURL  = dataURL.replace('+', '.');
+       }
+       while (dataURL.indexOf('/') > 0) {
+          dataURL  = dataURL.replace('/', '_');
+       }
+       while (dataURL.indexOf('=') > 0) {
+          dataURL  = dataURL.replace('=', '-');
+       }
+       window.location.href = '/go/' + dataURL;
+    }
 
    function findxy(res, e) {
        if (res == 'down') {
@@ -149,18 +153,21 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
             <p class="text-center">Draw an image and click "Done!" to recognize it!</p>
         </div>
     </div>
+
     <div class="row justify-content-center">
+
+       <!-- Place to render model prediction -->
+      {% block message %}
+      {% endblock %}
+
        <!-- Canvas element to draw images-->
-      <!-- <canvas id="can" width="400" height="400" style="position:absolute;top:10%;left:10%;border:2px solid;"></canvas>-->
        <canvas id="can" width="400" height="400" style="border:2px solid; margin:25px"></canvas>
     </div>
        <!-- Button to confirm drawing-->
-       <!-- <input type="button" value="Done!" id="btn" size="30" onclick="save()" style="position:absolute;top:60%;left:10%;">-->
     <div class="row justify-content-center">
        <input class="btn btn-primary col-md-1" type="button" value="Done!" id="btn" onclick="save()">
 
        <!-- Button to clear canvas-->
-       <!-- <input type="button" value="Clear" id="clr" size="23" onclick="erase()" style="position:absolute;top:60%;left:15%;">-->
        <input class="btn btn-primary col-md-1 ml-5" type="button" value="Clear" id="clr" onclick="erase()">
     </div>
 

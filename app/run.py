@@ -144,14 +144,19 @@ def index():
     # render web page
     return render_template('index.html')
 
-@app.route('/hook', methods=['POST'])
-def get_image():
+@app.route('/go/<dataURL>')
+def pred(dataURL):
     """
-    Get the drawing from the main page.
+    Render prediction result.
     """
+
+    # decode base64  '._-' -> '+/='
+    dataURL = dataURL.replace('.', '+')
+    dataURL = dataURL.replace('_', '/')
+    dataURL = dataURL.replace('-', '=')
+
     # get the base64 string
-    image_b64 = request.values['imageBase64']
-    image_b64_str = image_b64.split(',')[1].strip()
+    image_b64_str = dataURL
     # convert string to bytes
     byte_data = base64.b64decode(image_b64_str)
     image_data = BytesIO(byte_data)
@@ -160,7 +165,7 @@ def get_image():
 
     # save original image as png (for debugging)
     ts = time.time()
-    img.save('image' + str(ts) + '.png', 'PNG')
+    #img.save('image' + str(ts) + '.png', 'PNG')
 
     # preprocess the image for the model
     image_cropped = crop_image(img) # crop the image and resize to 28x28
@@ -168,19 +173,22 @@ def get_image():
 
     # convert image from RGBA to RGB
     img_rgb = convert_to_rgb(image_normalized)
-    img_rgb.save('image_rgb' + str(ts) + '.png', 'PNG') # save image
 
     # convert image to numpy
     image_np = convert_to_np(img_rgb)
 
     # apply model and print prediction
     label, label_num, preds = get_prediction(model, image_np)
-    print("This is {}".format(label_num))
+    print("This is a {}".format(label_num))
 
+    # save classification results as a diagram
     view_classify(image_np, preds)
 
-    return ''
-
+    # render the hook.html passing prediction resuls
+    return render_template(
+        'hook.html',
+        result = label_num
+    )
 
 def main():
     app.run(host='0.0.0.0', port=3001, debug=True)
