@@ -13,13 +13,13 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
 
       <title>Quick Draw!</title>
       <link rel="shortcut icon" href="{{url_for('static', filename='favicon.ico')}}">
-
       <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
       <script src="http://cdn.jsdelivr.net/jquery.validation/1.15.0/jquery.validate.min.js"></script>
       <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
-
       <!-- FontAwesome JS -->
       <script defer src="https://use.fontawesome.com/releases/v5.7.2/js/all.js" integrity="sha384-0pzryjIRos8mFBWMzSSZApWtPl/5++eIfzYmTgBBmXYdhvxPc+XcFEk+zJwDgWbP" crossorigin="anonymous"></script>
+      <!-- Plotly-->
+      <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
   </head>
   <script type="text/javascript">
    var canvas, ctx, flag = false,
@@ -154,14 +154,15 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
         </div>
     </div>
 
+    <!-- Block for the main content of the page: canvas and model predictions -->
     <div class="row justify-content-center">
 
        <!-- Place to render model prediction -->
       {% block message %}
       {% endblock %}
 
-       <!-- Canvas element to draw images-->
-       <canvas id="can" width="400" height="400" style="border:2px solid; margin:25px"></canvas>
+      <!-- Canvas element to draw images-->
+      <canvas id="can" width="400" height="400" style="border:2px solid; margin:25px"></canvas>
     </div>
        <!-- Button to confirm drawing-->
     <div class="row justify-content-center">
@@ -171,5 +172,7 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
        <input class="btn btn-primary col-md-1 ml-5" type="button" value="Clear" id="clr" onclick="erase()">
     </div>
 
+    {% block body %}
+    {% endblock %}
   </body>
 </html>

@@ -18,10 +18,16 @@ import base64
 import io
 import time
 from collections import OrderedDict
+import json
 
 # import matplotlib for plotting
 from matplotlib.pyplot import imshow
 import matplotlib.pyplot as plt
+
+# import Plotly
+import plotly
+import plotly.plotly as py
+import plotly.graph_objs as go
 
 # import Flask
 from flask import Flask
@@ -184,10 +190,38 @@ def pred(dataURL):
     # save classification results as a diagram
     view_classify(image_np, preds)
 
+    # create plotly visualization
+    graphs = [
+        #plot with probabilities for each class of images
+        {
+            'data': [
+                go.Bar(
+                        x = preds.ravel().tolist(),
+                        y = list(label_dict.values()),
+                        orientation = 'h')
+            ],
+
+            'layout': {
+                'title': 'Class Probabilities',
+                'yaxis': {
+                    'title': "Classes"
+                },
+                'xaxis': {
+                    'title': "Probability",
+                }
+            }
+        }]
+
+    # encode plotly graphs in JSON
+    ids = ["graph-{}".format(i) for i, _ in enumerate(graphs)]
+    graphJSON = json.dumps(graphs, cls=plotly.utils.PlotlyJSONEncoder)
+
     # render the hook.html passing prediction resuls
     return render_template(
         'hook.html',
-        result = label_num
+        result = label_num, # predicted class label
+        ids=ids, # plotly graph ids
+        graphJSON=graphJSON # json plotly graphs
     )
 
 def main():

@@ -5,4 +5,22 @@
   <div class="alert alert-success ml-5 col-10" role="alert">
       <h4 class="alert-heading" align="center" >Is this a {{result}}?</h4>
   </div>
+  <div class="row">
+      {% for id in ids %}
+          <div class ="col-sm-6">
+              <div id="{{id}}"></div>
+          </div>
+      {% endfor %}
+  </div>
+{% endblock %}
+
+{% block body %}
+<script type="text/javascript">
+    const graphs = {{graphJSON | safe}};
+    const ids = {{ids | safe}};
+    for(let i in graphs) {
+        Plotly.plot(ids[i], graphs[i].data, graphs[i].layout);
+    }
+    console.log('graphs rendered');
+</script>
 {% endblock %}
