@@ -344,18 +344,21 @@ def crop_image(image):
                 image_strokes_cols.append(i)
                 image_strokes_rows.append(j)
 
-    # find the box for image
-    row_min = np.array(image_strokes_rows).min()
-    row_max = np.array(image_strokes_rows).max()
-    col_min = np.array(image_strokes_cols).min()
-    col_max = np.array(image_strokes_cols).max()
+    # if image is not empty then crop to contents of the image
+    if (len(image_strokes_rows)) > 0:
+        # find the box for image
+        row_min = np.array(image_strokes_rows).min()
+        row_max = np.array(image_strokes_rows).max()
+        col_min = np.array(image_strokes_cols).min()
+        col_max = np.array(image_strokes_cols).max()
 
-    # find the box for cropping
-    margin = min(row_min, height - row_max, col_min, width - col_max)
+        # find the box for cropping
+        margin = min(row_min, height - row_max, col_min, width - col_max)
 
-    # crop image
-    border = (col_min, row_min, width - col_max, height - row_max)
-    cropped_image = ImageOps.crop(cropped_image, border)
+        # crop image
+        border = (col_min, row_min, width - col_max, height - row_max)
+        cropped_image = ImageOps.crop(cropped_image, border)
+
     # get cropped image size
     width_cropped, height_cropped = cropped_image.size
 
