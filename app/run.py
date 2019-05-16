@@ -221,7 +221,8 @@ def pred(dataURL):
         'hook.html',
         result = label_num, # predicted class label
         ids=ids, # plotly graph ids
-        graphJSON=graphJSON # json plotly graphs
+        graphJSON=graphJSON, # json plotly graphs
+        dataURL = dataURL # image to display with result
     )
 
 def main():

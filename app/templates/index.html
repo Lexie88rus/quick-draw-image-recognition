@@ -88,6 +88,7 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
        while (dataURL.indexOf('=') > 0) {
           dataURL  = dataURL.replace('=', '-');
        }
+
        window.location.href = '/go/' + dataURL;
     }
 
@@ -156,16 +157,16 @@ https://stackoverflow.com/questions/2368784/draw-on-html5-canvas-using-a-mouse
 
     <!-- Block for the main content of the page: canvas and model predictions -->
     <div class="row justify-content-center">
-
-       <!-- Place to render model prediction -->
-      {% block message %}
-      {% endblock %}
-
       <!-- Canvas element to draw images-->
       <canvas id="can" width="400" height="400" style="border:2px solid; margin:25px"></canvas>
     </div>
+
+    <!-- Place to render model prediction -->
+   {% block message %}
+   {% endblock %}
+
+    <div class="row justify-content-center" id="buttons">
        <!-- Button to confirm drawing-->
-    <div class="row justify-content-center">
        <input class="btn btn-primary col-md-1" type="button" value="Done!" id="btn" onclick="save()">
 
        <!-- Button to clear canvas-->

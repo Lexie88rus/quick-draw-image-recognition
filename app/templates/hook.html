@@ -2,25 +2,67 @@
 {% block title %}Results{% endblock %}
 
 {% block message %}
+<div class="row justify-content-center">
   <div class="alert alert-success ml-5 col-10" role="alert">
       <h4 class="alert-heading" align="center" >Is this a {{result}}?</h4>
   </div>
-  <div class="row">
+</div>
+<div class="row">
+  <div class ="col-1">
+  </div>
       {% for id in ids %}
-          <div class ="col-sm-6">
+          <div class ="col-5">
               <div id="{{id}}"></div>
           </div>
       {% endfor %}
-  </div>
-{% endblock %}
+      <div class ="col-1">
+      </div>
+      <div class ="col-5">
+        <img id="canvasimg" style="display:none;">
+      </div>
+</div>
+<div class="row justify-content-center">
+     <!-- Button to navigate back-->
+     <div class ="col-3">
+       <button type="button" class="btn btn-primary btn-lg btn-block" onClick="location.href='../'">Back to main page</button>
+     </div>
+</div>
+  {% endblock %}
 
 {% block body %}
 <script type="text/javascript">
+    // render plot with probabilities for each class
     const graphs = {{graphJSON | safe}};
     const ids = {{ids | safe}};
     for(let i in graphs) {
         Plotly.plot(ids[i], graphs[i].data, graphs[i].layout);
     }
     console.log('graphs rendered');
+</script>
+
+<script type="text/javascript">
+  // render drawn image
+  dataUrl = "data:image/png;base64," + '{{dataURL}}'
+  document.getElementById("canvasimg").style.border = "2px solid";
+  document.getElementById("canvasimg").src = dataUrl;
+  document.getElementById("canvasimg").style.display = "inline";
+</script>
+
+<script type="text/javascript">
+  // hide canvas
+  var x = document.getElementById("can");
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
+
+  // hide div with buttons
+  var x = document.getElementById("buttons");
+  if (x.style.display === "none") {
+    x.style.display = "block";
+  } else {
+    x.style.display = "none";
+  }
 </script>
 {% endblock %}
