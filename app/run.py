@@ -34,6 +34,8 @@ from flask import Flask
 from flask import render_template, request
 
 # import image processing
+import sys
+sys.path.insert(0, '../')
 import image_utils
 from image_utils import crop_image, normalize_image, convert_to_rgb, convert_to_np
 
