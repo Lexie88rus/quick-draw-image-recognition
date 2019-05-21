@@ -32,6 +32,11 @@ The implementation consists of two parts:
 2.	Building a web application to demonstrate the model.
 ### Data Preprocessing
 I chose already preprocessed dataset with images which are already cropped and resized to 28 to 28 pixels. However, I decided also to generate a set of slightly rotated and flipped images. I added these images to the training dataset to reduce the variance of the resulting model.
+
+<p>Image preprocessing example:
+
+![preprocessing](https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/assets/image%20examples/preprocessing_example.png)
+   
 ### Building the Model
 To simplify the task a little I chose only ten image classes from the initial dataset.
 My goal is to build a model, which takes 28 x 28 pixels image as an input and gives probabilities for each of the possible classes as an output. The figure below demonstrates the desired result:
