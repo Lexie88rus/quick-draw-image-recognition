@@ -1,7 +1,7 @@
 # Quick, Draw! Image Recognition
 Recognition of Quick, Draw! game doodles.
 
-## Table of Contents
+## TABLE OF CONTENTS
 * [Definition](#definition)
 * [Input Data](#input-data)
 * [Implementation](#implementation)
@@ -21,11 +21,11 @@ Recognition of a drawing is a classification problem. I have to build a solution
 * Building a web-application to demonstrate the results.
 ### Metrics
 I chose accuracy as a metric to evaluate the results. Because of the rules of the game, we mostly care about how many times did the AI recognize the drawing correctly, and this is just the accuracy of the model.
-## Input Data
+## INPUT DATA
 I chose the simplified dataset with images in .npy format. This format is the easiest to use, preprocess, and to produce by a web application.
 The examples of simplified images from the dataset:
 ![images examples](https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/assets/image%20grids/eye_grid.png)
-## Implementation
+## IMPLEMENTATION
 Since there is a lot of data, and I can even generate additional data by flipping and rotating the images, I decided to use deep learning approaches to classify drawings.
 The implementation consists of two parts:
 1.	Building and refining the deep learning model to classify drawings;
@@ -76,7 +76,7 @@ To solve this problem I used Flask, Bootstrap, Plotly, and PIL library for image
 The demo of the application:
 
 ![app demo](https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/assets/demo/demo.gif)
-## Repository Structure
+## REPOSITORY STRUCTURE
 The repository has the following structure:
 ```
 - app
@@ -113,7 +113,7 @@ $ python run.py
 ```
 5. Open http://0.0.0.0:3001/ in browser.
 
-## Conclusions
+## CONCLUSION
 The goal of the project was to build the application to recognize drawing based on Quick, Draw! game dataset. The solution I proposed is as follows:
 * The first part of the solution is a deep learning model to recognize images. I used a neural network with several hidden layers to achieve 85% accuracy on the test dataset.
 * The second part of the solution was building a web application to demonstrate the ability of the model to recognize the images.
