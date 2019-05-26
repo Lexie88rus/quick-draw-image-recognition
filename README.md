@@ -1,5 +1,5 @@
 # Quick, Draw! Image Recognition
-Recognition of Quick, Draw! game doodles.
+Recognition of Quick, Draw! game doodles. The full project report is [here](https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/Quick%20Draw%20Report.pdf).
 
 ## TABLE OF CONTENTS
 * [Definition](#definition)
