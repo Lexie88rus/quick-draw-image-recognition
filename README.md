@@ -115,6 +115,14 @@ $ python run.py
 
 ## CONCLUSION
 The goal of the project was to build the application to recognize drawing based on Quick, Draw! game dataset. The solution I proposed is as follows:
-* The first part of the solution is a deep learning model to recognize images. I used a neural network with several hidden layers to achieve 85% accuracy on the test dataset.
+* The first part of the solution is a deep learning model to recognize images. I used a fully connected neural network with several hidden layers to achieve 85% accuracy on the test dataset.
 * The second part of the solution was building a web application to demonstrate the ability of the model to recognize the images.
 The most challenging part of the of this project was applying regularization techniques to reduce the variance of the model. I tried several regularization techniques such as using dropout and L2 regularization (weight decay).
+<br>The example of how the model works on drawings from the web app:
+![prediction demo](https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/assets/demo/eye_app_demo.png)
+
+### Improvement
+The model performs quite well on ten image classes from the simplified dataset, but there is a lot to improve:
+* Add more drawing classes;
+* Try other architectures: convolutional neural networks;
+* Try the full dataset, which contains images with higher resolution and additional information (country, strokes and so on).
