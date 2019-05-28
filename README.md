@@ -94,6 +94,9 @@ The repository has the following structure:
 - build_random_forest.py # script, which builds the classifier using Random Forest
 - image_utils.py # script for image manipulations
 
+- Quick Draw Report.pdf # report on the project
+- Getting Started with PyTorch for Quick, Draw!.ipynb # Kaggle kernel jupyter notebook
+
 - README.md
 ```
 ### Setup Instructions
