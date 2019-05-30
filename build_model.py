@@ -346,12 +346,14 @@ def view_classify(img, ps):
     ts = time.time()
     plt.savefig('prediction' + str(ts) + '.png')
 
-def save_model(model, input_size, output_size, hidden_sizes, dropout, filepath = 'checkpoint.pth'):
+def save_model(model, architecture, input_size, output_size, hidden_sizes, dropout, filepath = 'checkpoint.pth'):
     """
     Functions saves model checkpoint.
 
     INPUT:
         model - pytorch model
+        architecture - model architecture ('nn' - for fully connected neural network, 'conv' - for convolutional neural
+        network)
         input_size - size of the input layer
         output_size - size of the output layer
         hidden_sizes - list of the hidden layer sizes
@@ -362,19 +364,25 @@ def save_model(model, input_size, output_size, hidden_sizes, dropout, filepath =
     """
 
     print("Saving model to {}\n".format(filepath))
-    checkpoint = {'input_size': input_size,
-              'output_size': output_size,
-              'hidden_layers': hidden_sizes,
-              'dropout': dropout,
-              'state_dict': model.state_dict()}
+    if architecture == 'nn':
+        checkpoint = {'input_size': input_size,
+                  'output_size': output_size,
+                  'hidden_layers': hidden_sizes,
+                  'dropout': dropout,
+                  'state_dict': model.state_dict()}
 
-    torch.save(checkpoint, filepath)
+        torch.save(checkpoint, filepath)
+    else:
+        checkpoint = {'state_dict': model.state_dict()}
+        torch.save(checkpoint, filepath)
 
-def load_model(filepath = 'checkpoint.pth'):
+def load_model(architecture = 'nn', filepath = 'checkpoint.pth'):
     """
     Function loads the model from checkpoint.
 
     INPUT:
+        architecture - model architecture ('nn' - for fully connected neural network, 'conv' - for convolutional neural
+        network)
         filepath - path for the saved model
 
     OUTPUT:
@@ -383,23 +391,29 @@ def load_model(filepath = 'checkpoint.pth'):
 
     print("Loading model from {} \n".format(filepath))
 
-    checkpoint = torch.load(filepath)
-    input_size = checkpoint['input_size']
-    output_size = checkpoint['output_size']
-    hidden_sizes = checkpoint['hidden_layers']
-    dropout = checkpoint['dropout']
-    model = nn.Sequential(OrderedDict([
-                          ('fc1', nn.Linear(input_size, hidden_sizes[0])),
-                          ('relu1', nn.ReLU()),
-                          ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
-                          ('bn2', nn.BatchNorm1d(num_features=hidden_sizes[1])),
-                          ('relu2', nn.ReLU()),
-                          ('dropout', nn.Dropout(dropout)),
-                          ('fc3', nn.Linear(hidden_sizes[1], hidden_sizes[2])),
-                          ('bn3', nn.BatchNorm1d(num_features=hidden_sizes[2])),
-                          ('relu3', nn.ReLU()),
-                          ('logits', nn.Linear(hidden_sizes[2], output_size))]))
-    model.load_state_dict(checkpoint['state_dict'])
+    if architecture == 'nn':
+        checkpoint = torch.load(filepath)
+        input_size = checkpoint['input_size']
+        output_size = checkpoint['output_size']
+        hidden_sizes = checkpoint['hidden_layers']
+        dropout = checkpoint['dropout']
+        model = nn.Sequential(OrderedDict([
+                              ('fc1', nn.Linear(input_size, hidden_sizes[0])),
+                              ('relu1', nn.ReLU()),
+                              ('fc2', nn.Linear(hidden_sizes[0], hidden_sizes[1])),
+                              ('bn2', nn.BatchNorm1d(num_features=hidden_sizes[1])),
+                              ('relu2', nn.ReLU()),
+                              ('dropout', nn.Dropout(dropout)),
+                              ('fc3', nn.Linear(hidden_sizes[1], hidden_sizes[2])),
+                              ('bn3', nn.BatchNorm1d(num_features=hidden_sizes[2])),
+                              ('relu3', nn.ReLU()),
+                              ('logits', nn.Linear(hidden_sizes[2], output_size))]))
+        model.load_state_dict(checkpoint['state_dict'])
+
+    else:
+        checkpoint = torch.load(filepath)
+        model = SimpleCNN()
+        model.load_state_dict(checkpoint['state_dict'])
 
     return model
 
@@ -689,16 +703,16 @@ def main():
 
     # Evaluate model
     evaluate_model(model, train, y_train, test, y_test, architecture = architecture)
-    test_model(model, test[0], architecture = architecture)
+    #test_model(model, test[0], architecture = architecture)
 
     # Save the model
-    save_model(model, input_size, output_size, hidden_sizes, dropout, filepath = save_path)
+    save_model(model,architecture, input_size, output_size, hidden_sizes, dropout, filepath = save_path)
 
     #compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, n_chunks = n_chunks, optimizer = optimizer)
 
-    #loaded_model = load_model()
-    #loaded_model.eval()
-    #pred = test_model(loaded_model, test[0])
+    loaded_model = load_model(architecture)
+    loaded_model.eval()
+    pred = test_model(loaded_model, test[0], architecture = architecture)
 
 if __name__ == '__main__':
     main()
