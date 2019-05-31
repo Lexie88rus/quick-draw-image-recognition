@@ -532,7 +532,7 @@ def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_
         model = build_model(input_size, output_size, hidden_sizes, dropout = dropout)
 
         # fit model
-        fit_model(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = 'SGD')
+        fit_model(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
         # get accuracy
         accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test)
 
@@ -541,6 +541,55 @@ def plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_
 
     # Plot curve
     x = np.arange(10, 210, 10)
+    plt.plot(x, train_acc)
+    plt.plot(x, test_acc)
+    plt.legend(['train', 'test'], loc='upper left')
+    plt.title('Accuracy, learning_rate = ' + str(learning_rate), fontsize=20)
+    plt.xlabel('Number of epochs', fontsize=14)
+    plt.ylabel('Accuracy', fontsize=14)
+
+    ts = time.time()
+    plt.savefig('learning_curve' + str(ts) + '.png')
+
+    df = pd.DataFrame.from_dict({'train' : train_acc, 'test' :test_acc})
+    df.to_csv('learning_curve_' + str(ts) + '.csv')
+
+def plot_learning_curve_conv(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = 0.003, weight_decay = 0.0, dropout = 0.0, n_chunks = 1000, optimizer = 'SGD'):
+    """
+    Function to plot learning curve depending on the number of epochs.
+
+    INPUT:
+        input_size, output_size, hidden_sizes - model parameters
+        train - (tensor) train dataset
+        labels - (tensor) labels for train dataset
+        y_train - (numpy) labels for train dataset
+        test - (tensor) test dataset
+        y_test - (numpy) labels for test dataset
+        learning_rate - learning rate hyperparameter
+        weight_decay - weight decay (regularization)
+        dropout - dropout for hidden layer
+        n_chunks - the number of minibatches to train the model
+        optimizer - optimizer to be used for training (SGD or Adam)
+
+    OUTPUT: None
+    """
+    train_acc = []
+    test_acc = []
+
+    for epochs in np.arange(2, 12, 2):
+        # create model
+        model = build_model(input_size, output_size, hidden_sizes, architecture = 'conv', dropout = dropout)
+
+        # fit model
+        fit_conv(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
+        # get accuracy
+        accuracy_train, accuracy_test = evaluate_model(model, train, y_train, test, y_test, architecture = 'conv')
+
+        train_acc.append(accuracy_train)
+        test_acc.append(accuracy_test)
+
+    # Plot curve
+    x = np.arange(2, 12, 2)
     plt.plot(x, train_acc)
     plt.plot(x, test_acc)
     plt.legend(['train', 'test'], loc='upper left')
@@ -700,9 +749,10 @@ def main():
         fit_conv(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
 
     #plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
+    plot_learning_curve_conv(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
 
     # Evaluate model
-    evaluate_model(model, train, y_train, test, y_test, architecture = architecture)
+    #evaluate_model(model, train, y_train, test, y_test, architecture = architecture)
     #test_model(model, test[0], architecture = architecture)
 
     # Save the model
@@ -710,9 +760,9 @@ def main():
 
     #compare_hyperparameters(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate, n_chunks = n_chunks, optimizer = optimizer)
 
-    loaded_model = load_model(architecture)
-    loaded_model.eval()
-    pred = test_model(loaded_model, test[0], architecture = architecture)
+    #loaded_model = load_model(architecture)
+    #loaded_model.eval()
+    #pred = test_model(loaded_model, test[0], architecture = architecture)
 
 if __name__ == '__main__':
     main()
