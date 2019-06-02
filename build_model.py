@@ -177,7 +177,7 @@ def build_model(input_size, output_size, hidden_sizes, architecture = 'nn', drop
     else:
         if (architecture == 'conv'):
             # Build a simple convolutional network
-            model = SimpleCNN()
+            model = SimpleCNN(64, output_size)
 
     return model
 
@@ -749,7 +749,7 @@ def main():
         fit_conv(model, train, labels, epochs = epochs, n_chunks = n_chunks, learning_rate = learning_rate, weight_decay = weight_decay, optimizer = optimizer)
 
     #plot_learning_curve(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
-    plot_learning_curve_conv(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
+    #plot_learning_curve_conv(input_size, output_size, hidden_sizes, train, labels, y_train, test, y_test, learning_rate = learning_rate, dropout = dropout, weight_decay = weight_decay, n_chunks = n_chunks, optimizer = optimizer)
 
     # Evaluate model
     #evaluate_model(model, train, y_train, test, y_test, architecture = architecture)

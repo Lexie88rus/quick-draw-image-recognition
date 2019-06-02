@@ -13,7 +13,13 @@ class SimpleCNN(nn.Module):
 
     #Our batch shape for input x is (1, 28, 28)
 
-    def __init__(self):
+    def __init__(self, hidden_size = 64, output_size = 10):
+        '''
+        Init method
+        INPUT:
+            hidden_size - size of the hidden fully-connnected layer
+            output_size - size of the output
+        '''
         super(SimpleCNN, self).__init__()
 
         #Input channels = 3, output channels = 18
@@ -21,12 +27,17 @@ class SimpleCNN(nn.Module):
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2, padding=0)
 
         #3528 input features, 64 output features (see sizing flow below)
-        self.fc1 = nn.Linear(18 * 14 * 14, 64)
+        self.fc1 = nn.Linear(18 * 14 * 14, hidden_size)
 
         #64 input features, 10 output features for our 10 defined classes
-        self.fc2 = nn.Linear(64, 10)
+        self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
+        '''
+        Forward pass of the model.
+        INPUT:
+            x - input data
+        '''
 
         #Computes the activation of the first convolution
         #Size changes from (3, 32, 32) to (18, 32, 32)
