@@ -43,7 +43,7 @@ My goal is to build a model, which takes 28 x 28 pixels image as an input and gi
 
 ![result example](https://github.com/Lexie88rus/quick-draw-image-recognition/blob/master/assets/prediction_eye.png)
 
-I started with a simple neural network with two hidden layers built with the PyTorch library.
+I started with a simple fully-connected neural network with two hidden layers built with the PyTorch library.
 The sizes of the layers are as follows:
 * Input layer: 784 (for 28 x 28 images),
 * Hidden layer 1: 128,
@@ -57,6 +57,14 @@ The sizes of the layers are as follows:
 * Dropout for hidden layers,
 * Weight decay (L2 regularization),
 * Optimizer: Adam or SGD.
+
+<br>The simple fully-connected neural network doesn't have sufficient accuracy and also has a very high variance. That's why I tried other convolutional neural network architecture:
+* 1 2d convolutional layer,
+* 1 2d maxp pooling layer,
+* 1 fully-connected layer,
+* ReLU activations,
+* output layer.
+
 <br>The result of building the model part is the buil_model.py script which allows creating, training, and saving the PyTorch deep learning model with the architecture described above. Hyperparameters, as well as the number of epochs for training, may be passed through the command line. The resulting model is loaded and used by the web application described in the next section.
 ### Building the Web App
 The purpose of the web application is to demonstrate how the model can identify the image drawn by the user of the application. The resulting application should let the user:
