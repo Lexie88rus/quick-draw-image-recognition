@@ -175,6 +175,9 @@ def pred(dataURL):
     ts = time.time()
     #img.save('image' + str(ts) + '.png', 'PNG')
 
+    # convert image to RGBA
+    img = img.convert("RGBA")
+
     # preprocess the image for the model
     image_cropped = crop_image(img) # crop the image and resize to 28x28
     image_normalized = normalize_image(image_cropped) # normalize color after crop
