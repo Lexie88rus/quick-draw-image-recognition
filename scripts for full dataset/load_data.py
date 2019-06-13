@@ -185,11 +185,11 @@ def get_drawings(category, data_filepath = './data', num_drawings = 0, width = 2
     # convert images from raw to numpy
     np_images = []
     for i in range(min(len(data), num_drawings)):
-        img = convert_to_np_raw([ast.literal_eval(str(img)) for img in data[i]['drawing']], width = width, height = height)
+        img = convert_to_PIL([ast.literal_eval(str(img)) for img in data[i]['drawing']], width = width, height = height)
         np_images.append(img)
 
-    # return numpy images array
-    return np.array(np_images)
+    # return images array
+    return np_images
 
 def prepare_data(label_dict, data_filepath = './data', num_drawings = 0, width = 256, height = 256):
     """
@@ -211,17 +211,19 @@ def prepare_data(label_dict, data_filepath = './data', num_drawings = 0, width =
     for key, value in label_dict.items():
         # get data for each category
         cat_data = get_drawings(value, data_filepath = data_filepath, num_drawings = num_drawings, width = width, height=height)
-        [data.append(np_img) for np_img in cat_data]
+        [data.append(img) for img in cat_data]
         labels.append([key for i in range(num_drawings)])
 
     # convert to numpy array
-    data = np.array(data)
     labels = np.array(labels)
     labels = labels.reshape(labels.shape[0] * labels.shape[1])
 
-    # save data as npz
-    np.savez(data_filepath + '/' + 'data.npz', data)
-    np.savez(data_filepath + '/' + 'labels.npz', labels)
+    # save data
+    with open(data_filepath + '/' + 'data.pickle', 'wb') as f:
+        pickle.dump(data, f)
+
+    with open(data_filepath + '/' + 'labels.pickle', 'wb') as f:
+        pickle.dump(labels, f)
 
 def load_data(data_filepath = './data'):
     """
@@ -231,8 +233,13 @@ def load_data(data_filepath = './data'):
     OUTPUT:
         2. data, labels - loaded image data and labels
     """
-    data = np.load(data_filepath + '/' + 'data.npz')['arr_0']
-    labels = np.load(data_filepath + '/' + 'labels.npz')['arr_0']
+    file = open(data_filepath + '/' + 'data.pickle','rb')
+    data = pickle.load(file)
+    file.close()
+
+    file = open(data_filepath + '/' + 'labels.pickle','rb')
+    labels = pickle.load(file)
+    file.close()
 
     return data, labels
 
@@ -262,10 +269,10 @@ def main():
     load_simplified_data(categories, data_filepath = data_filepath)
 
     # get images for apples
-    apples = get_drawings('apple', num_drawings = 5)
+    #apples = get_drawings('apple', num_drawings = 5)
 
     # view image example
-    view_image(apples[3], width = 256, height = 256, category = 'apple')
+    #view_image(apples[3], width = 256, height = 256, category = 'apple')
 
     # prepare data and save to pickle files
     prepare_data(label_dict, data_filepath = data_filepath, num_drawings = num_examples, width = 256, height = 256)

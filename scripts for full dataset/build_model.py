@@ -73,7 +73,7 @@ class DoodlesDataset(Dataset):
         return len(self.data)
 
     def __getitem__(self, idx):
-        image = convert_to_PIL(self.data[idx])
+        image = self.data[idx]
         label = self.labels[idx]
 
         if self.transform:
@@ -171,12 +171,15 @@ def train_model(model, trainloader, testloader, epochs, batch_size, learning_rat
                 model.train()
 
 def main():
+    print('Load data: \n')
+
     # load categories and labels dictionary
     categories, labels_dict = load_categories(num_categories = 10)
 
     # load from pickle
     data, labels = load_data(data_filepath = './data')
 
+    print('Setup the model: \n')
     # define train transformations
     train_transforms = transforms.Compose([transforms.RandomRotation(30),
                                            transforms.RandomHorizontalFlip(),
@@ -210,6 +213,7 @@ def main():
     # setup the model
     model = initialize_model(10)
 
+    print('Train the model: \n')
     # train the model
     train_model(model, trainloader, testloader, epochs, batch_size, learning_rate, device)
 
